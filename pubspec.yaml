@@ -16,6 +16,8 @@ dependencies:
   flutter_pdfview: ^1.0.0
   cupertino_icons: ^1.0.8
   path_provider: ^2.0.11
+  sqflite: ^2.0.0+4
+  path: ^1.8.0
 
 dev_dependencies:
   flutter_test:
@@ -23,3 +25,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/plantilla_cotizacion.pdf #plantilla en formato pdf 

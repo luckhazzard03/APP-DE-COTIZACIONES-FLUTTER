@@ -1,0 +1,7 @@
+import 'package:flutter/services.dart';
+
+// Cargar la plantilla desde assets
+final ByteData bytes = await rootBundle.load('assets/plantilla_cotizacion.pdf');
+final List<int> list = bytes.buffer.asUint8List();
+
+// Aquí podrías integrar la plantilla si necesitas hacer modificaciones
