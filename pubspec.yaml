@@ -18,6 +18,9 @@ dependencies:
   path_provider: ^2.0.11
   sqflite: ^2.0.0+4
   path: ^1.8.0
+  universal_html: ^2.2.3 # Añade esta línea para soporte web
+  open_file: ^3.2.1
+  intl: ^0.18.0
 
 dev_dependencies:
   flutter_test:
@@ -26,4 +29,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/plantilla_cotizacion.pdf #plantilla en formato pdf 
+    - assets/plantilla_cotizacion.pdf
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700

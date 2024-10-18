@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/cotizacion.dart';
-import '../models/itemCotizacion.dart'; // Importar el modelo
+import '../models/itemCotizacion.dart';
 import '../services/pdf_service.dart';
 
 class CotizacionForm extends StatefulWidget {
@@ -12,13 +13,35 @@ class _CotizacionFormState extends State<CotizacionForm> {
   final _formKey = GlobalKey<FormState>();
   String? senores, nit, telefono, direccion, fecha;
   int? numeroCotizacion;
-  List<ItemCotizacion> items = []; // Lista para almacenar ítems
+  List<ItemCotizacion> items = [];
 
   // Controladores para los campos de ítem
   TextEditingController descripcionController = TextEditingController();
   TextEditingController cantidadController = TextEditingController();
   TextEditingController valorUnitarioController = TextEditingController();
-  int? editingIndex; // Para saber qué ítem se está editando
+  TextEditingController fechaController = TextEditingController();
+  int? editingIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    fechaController.text = fecha ?? '';
+  }
+
+  void _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        fecha = DateFormat('yyyy-MM-dd').format(picked);
+        fechaController.text = fecha!; // Actualiza el controlador
+      });
+    }
+  }
 
   bool _validarCampos() {
     final descripcion = descripcionController.text;
@@ -62,15 +85,13 @@ class _CotizacionFormState extends State<CotizacionForm> {
           valorUnitario: valorUnitario,
         ));
       } else {
-        // Actualizar ítem existente
         items[editingIndex!] = ItemCotizacion(
           descripcion: descripcion,
           cantidad: cantidad,
           valorUnitario: valorUnitario,
         );
-        editingIndex = null; // Restablecer el índice de edición
+        editingIndex = null;
       }
-      // Limpiar los campos después de agregar o actualizar
       _limpiarCampos();
     });
   }
@@ -82,7 +103,7 @@ class _CotizacionFormState extends State<CotizacionForm> {
     valorUnitarioController.text = item.valorUnitario.toString();
 
     setState(() {
-      editingIndex = index; // Establecer el índice de edición
+      editingIndex = index;
     });
   }
 
@@ -108,9 +129,18 @@ class _CotizacionFormState extends State<CotizacionForm> {
         direccion: direccion!,
         numeroCotizacion: numeroCotizacion!,
         fecha: fecha!,
-        items: items, // Pasar la lista de ítems
+        items: items,
       );
-      PdfService.generarPDF(context, cotizacion);
+      PdfService.generarPDFSimple(cotizacion).then((pdfBytes) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF generado con éxito')),
+        );
+      }).catchError((error) {
+        print('Error al generar PDF: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al generar PDF')),
+        );
+      });
     }
   }
 
@@ -127,15 +157,25 @@ class _CotizacionFormState extends State<CotizacionForm> {
               _buildTextFormField('NIT o CC', (value) => nit = value),
               _buildTextFormField('Teléfono', (value) => telefono = value),
               _buildTextFormField('Dirección', (value) => direccion = value),
-              _buildTextFormField('Número de Cotización',
-                  (value) => numeroCotizacion = int.tryParse(value!),
-                  keyboardType: TextInputType.number),
-              _buildTextFormField('Fecha', (value) => fecha = value),
-
-              // Campos para agregar ítems
+              _buildTextFormField(
+                'Número de Cotización',
+                (value) => numeroCotizacion = int.tryParse(value!),
+                keyboardType: TextInputType.number,
+              ),
+              GestureDetector(
+                onTap: () => _selectDate(context),
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    controller: fechaController,
+                    decoration: InputDecoration(
+                      labelText: 'Fecha',
+                      hintText: 'Selecciona una fecha',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ),
               _buildItemFields(),
-
-              // Botón para agregar o actualizar ítem
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _agregarItem,
@@ -149,8 +189,6 @@ class _CotizacionFormState extends State<CotizacionForm> {
                   textStyle: TextStyle(fontSize: 16),
                 ),
               ),
-
-              // Mostrar la lista de ítems
               ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
@@ -178,7 +216,6 @@ class _CotizacionFormState extends State<CotizacionForm> {
                   );
                 },
               ),
-
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _generarPDF,
